@@ -146,11 +146,10 @@ test('favorite blog', () => {
     likes: 12
   })
 })
-// test('favorite blog', () => {
-//   const result = listHelper.mostBlogs(listWithManyBlogs)
-//   expect(result).toEqual({
-//     title: 'Canonical string reduction',
-//     author: 'Edsger W. Dijkstra',
-//     likes: 12
-//   })
-// })
+test('favorite author', () => {
+  const result = listHelper.mostBlogs(listWithManyBlogs)
+  expect(result).toEqual({
+    author: 'Robert C. Martin',
+    blogs: 3
+  })
+})
