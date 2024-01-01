@@ -1,7 +1,5 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
-const User = require('../models/user')
-const jwt = require('jsonwebtoken')
 
 blogsRouter.get('/', async (request, response) => {
   const blogs = await Blog.find({}).populate('user', {
@@ -14,11 +12,7 @@ blogsRouter.get('/', async (request, response) => {
 
 blogsRouter.post('/', async (request, response) => {
   const body = request.body
-  const decodedToken = jwt.verify(request.token, process.env.SECRET)
-  if (!decodedToken) {
-    return response.status(401).json({ error: 'token invalid' })
-  }
-  const user = await User.findById(decodedToken.id)
+  const user = request.user
 
   const blog = new Blog({
     url: body.url,
@@ -38,21 +32,18 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
-  const decodedToken = jwt.verify(request.token, process.env.SECRET)
-  if (!decodedToken) {
-    return response.status(401).json({ error: 'token invalid' })
-  }
-  const decodedUser = await User.findById(decodedToken.id)
+  const user = request.user
+
   const blogId = request.params.id
-  if (decodedUser.blogs.includes(blogId)) {
+  if (user.blogs.includes(blogId)) {
     await Blog.findByIdAndDelete(blogId)
+    user.blogs = user.blogs.filter((id) => id.toString() !== blogId)
+    await user.save()
     response.status(204).end()
   } else {
-    return response
-      .status(401)
-      .json({
-        error: 'unauthorized action. blog to be deleted doesn\'t belong to you'
-      })
+    return response.status(401).json({
+      error: 'unauthorized action. blog to be deleted does not belong to you'
+    })
   }
 })
 
