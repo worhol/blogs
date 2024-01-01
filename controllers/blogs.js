@@ -38,8 +38,22 @@ blogsRouter.post('/', async (request, response) => {
 })
 
 blogsRouter.delete('/:id', async (request, response) => {
-  await Blog.findByIdAndDelete(request.params.id)
-  response.status(204).end()
+  const decodedToken = jwt.verify(request.token, process.env.SECRET)
+  if (!decodedToken) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
+  const decodedUser = await User.findById(decodedToken.id)
+  const blogId = request.params.id
+  if (decodedUser.blogs.includes(blogId)) {
+    await Blog.findByIdAndDelete(blogId)
+    response.status(204).end()
+  } else {
+    return response
+      .status(401)
+      .json({
+        error: 'unauthorized action. blog to be deleted doesn\'t belong to you'
+      })
+  }
 })
 
 blogsRouter.put('/:id', async (request, response) => {
