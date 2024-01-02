@@ -1,4 +1,3 @@
-
 const listHelper = require('../utils/list_helper')
 
 test('dummy returns one', () => {
@@ -31,14 +30,12 @@ describe('total likes', () => {
     const result = listHelper.totalLikes(listWithOneBlog)
     expect(result).toBe(5)
   })
-  
 
   test('of a bigger list is calculated right', () => {
     const result = listHelper.totalLikes(listHelper.initialBlogs)
     expect(result).toBe(36)
   })
 })
-
 
 test('favorite blog', () => {
   const result = listHelper.favoriteBlog(listHelper.initialBlogs)

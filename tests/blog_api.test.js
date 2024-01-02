@@ -13,34 +13,75 @@ beforeEach(async () => {
   const promiseArray = blogObjects.map((blog) => blog.save())
   await Promise.all(promiseArray)
 })
+beforeEach(async () => {
+  await User.deleteMany({})
+  const passwordHash = await bcrypt.hash('pass', 10)
+  const user = new User({
+    username: 'john',
+    blogs: '5a422a851b54a676234d17f7',
+    passwordHash
+  })
+  await user.save()
+})
 
 test('blogs are returned as JSON', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const response = await api.post('/api/login').send(user)
+  const token = await response.body.token
   await api
     .get('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
     .expect(200)
     .expect('Content-Type', /application\/json/)
 })
 test('all blogs are returned', async () => {
-  const response = await api.get('/api/blogs')
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
+  const response = await api
+    .get('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
   expect(response.body).toHaveLength(helper.initialBlogs.length)
 })
 
 test('unique identifier is named id', async () => {
-  const response = await api.get('/api/blogs')
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
+  const response = await api
+    .get('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
   response.body.forEach((blog) => {
     expect(blog.id).toBeDefined()
   })
 })
 
 test('post request creates a new blog post', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const response = await api.post('/api/login').send(user)
+  const token = await response.body.token
   const newBlog = {
     title: 'Architecture in web',
     author: 'Robert',
     url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+    user: user.id,
     likes: 5
   }
   await api
     .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
     .send(newBlog)
     .expect(201)
     .expect('Content-type', /application\/json/)
@@ -53,36 +94,76 @@ test('post request creates a new blog post', async () => {
 })
 
 test('if likes is missing defaluts to 0', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
   const newBlog = {
     title: 'Architecture in web',
     author: 'Robert',
     url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html'
   }
-  await api.post('/api/blogs').send(newBlog).expect(201)
+  await api
+    .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
+    .send(newBlog)
+    .expect(201)
 
   const blogsAtEnd = await helper.blogsInDb()
   const lastBlog = blogsAtEnd[helper.initialBlogs.length]
   expect(lastBlog.likes).toBe(0)
 })
 test('backend responds with code 400 if the title is missing', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
   const newBlog = {
     author: 'Robert',
     url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
     likes: 5
   }
-  await api.post('/api/blogs').send(newBlog).expect(400)
+  await api
+    .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
+    .send(newBlog)
+    .expect(400)
 })
 test('backend responds with code 400 if the url is missing', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
   const newBlog = {
     author: 'Robert',
     title: 'Good web development'
   }
-  await api.post('/api/blogs').send(newBlog).expect(400)
+  await api
+    .post('/api/blogs')
+    .set('Authorization', `Bearer ${token}`)
+    .send(newBlog)
+    .expect(400)
 })
 test('a blog can be deleted', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
+
   const blogsAtStart = await helper.blogsInDb()
   const blogToDelete = blogsAtStart[0]
-  await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204)
+  await api
+    .delete(`/api/blogs/${blogToDelete.id}`)
+    .set('Authorization', `Bearer ${token}`)
+    .expect(204)
 
   const blogsAtEnd = await helper.blogsInDb()
 
@@ -93,6 +174,12 @@ test('a blog can be deleted', async () => {
   expect()
 })
 test('a blog can be updated', async () => {
+  const user = {
+    username: 'john',
+    password: 'pass'
+  }
+  const responseUser = await api.post('/api/login').send(user)
+  const token = await responseUser.body.token
   const blogAtStart = await helper.blogsInDb()
   const blogtoUpdate = blogAtStart[0]
   const updatedBlogData = {
@@ -103,6 +190,7 @@ test('a blog can be updated', async () => {
   }
   await api
     .put(`/api/blogs/${blogtoUpdate.id}`)
+    .set('Authorization', `Bearer ${token}`)
     .send(updatedBlogData)
     .expect(204)
   const blogsAtEnd = await helper.blogsInDb()
@@ -166,11 +254,8 @@ describe('when there is initially one user in db', () => {
       password: 'salainen'
     }
 
-    const result = await api
-      .post('/api/users')
-      .send(newUser)
-      .expect(400)
-      // .expect('Content-Type', /application\/json/)
+    const result = await api.post('/api/users').send(newUser).expect(400)
+    // .expect('Content-Type', /application\/json/)
 
     expect(result.body.error).toContain('expected `username` to be unique')
 
