@@ -93,6 +93,28 @@ test('post request creates a new blog post', async () => {
   expect(title).toContain('Architecture in web')
 })
 
+test('adding a blog fails with the proper status code 401 Unauthorized if a token is not provided', async () => {
+  // const user = {
+  //   username: 'john',
+  //   password: 'pass'
+  // }
+  // const response = await api.post('/api/login').send(user)
+  // const token = await response.body.token
+  const newBlog = {
+    title: 'Architecture in web',
+    author: 'Robert',
+    url: 'http://blog.cleancoder.com/uncle-bob/2017/03/03/TDD-Harms-Architecture.html',
+    // user: user.id,
+    likes: 5
+  }
+  await api
+    .post('/api/blogs')
+    // .set('Authorization', `Bearer ${token}`)
+    .send(newBlog)
+    .expect(401)
+    .expect('Content-type', /application\/json/)
+})
+
 test('if likes is missing defaluts to 0', async () => {
   const user = {
     username: 'john',
