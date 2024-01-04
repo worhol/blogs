@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
+import SuccessMessage from './components/SuccessMessage'
+import ErrorMessage from './components/ErrorMessage'
 
 const App = () => {
   const [blogs, setBlogs] = useState([])
@@ -11,6 +13,8 @@ const App = () => {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [user, setUser] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
+  const [successMessage, setSuccessMessage] = useState(null)
 
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs))
@@ -38,8 +42,13 @@ const App = () => {
       setUser(user)
       setUsername('')
       setPassword('')
-    } catch (exception) {
-      console.log(exception.message)
+    } catch (error) {
+      setErrorMessage(error.response.data.error)
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+      setUsername('')
+      setPassword('')
     }
   }
 
@@ -56,17 +65,31 @@ const App = () => {
       author: author,
       url: url
     }
-    const newBlog = await blogService.create(blogObject)
-    setBlogs((prevBlogs) => [...prevBlogs, newBlog])
-    setAuthor('')
-    setTitle('')
-    setUrl('')
+    try {
+      const newBlog = await blogService.create(blogObject)
+      setBlogs((prevBlogs) => [...prevBlogs, newBlog])
+      setSuccessMessage(
+        `Blog ${newBlog.title} by ${newBlog.author} added succesfully`
+      )
+      setTimeout(() => {
+        setSuccessMessage(null)
+      }, 5000)
+      setAuthor('')
+      setTitle('')
+      setUrl('')
+    } catch (error) {
+      setErrorMessage(`${error.message} title or url are missing`)
+      setTimeout(() => {
+        setErrorMessage(null)
+      }, 5000)
+    }
   }
 
   if (user === null) {
     return (
       <div>
         <h2>Login to Application</h2>
+        <ErrorMessage message={errorMessage} />
         <form onSubmit={handleLogin}>
           <div>
             username
@@ -94,6 +117,9 @@ const App = () => {
   return (
     <div>
       <h2>blogs</h2>
+      <SuccessMessage message={successMessage} />
+      <ErrorMessage message={errorMessage} />
+
       <p>
         {user.name} logged in <button onClick={handleLogout}>logout</button>
       </p>
