@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Blog from './components/Blog'
 import blogService from './services/blogs'
 import loginService from './services/login'
 import SuccessMessage from './components/SuccessMessage'
 import ErrorMessage from './components/ErrorMessage'
 import CreateBlogForm from './components/CreateBlogForm'
+import Togglable from './components/Togglable'
 
 const App = () => {
-  const [createBlogVisible, setCreateBlogVisible] = useState(false)
   const [blogs, setBlogs] = useState([])
   const [title, setTitle] = useState('')
   const [author, setAuthor] = useState('')
@@ -17,9 +17,6 @@ const App = () => {
   const [user, setUser] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
-
-  const hideWhenVisible = { display: createBlogVisible ? 'none' : '' }
-  const showWhenVisible = { display: createBlogVisible ? '' : 'none' }
 
   useEffect(() => {
     blogService.getAll().then((blogs) => setBlogs(blogs))
@@ -62,6 +59,7 @@ const App = () => {
     setUser(null)
   }
 
+  const blogFormRef = useRef()
   const createBlog = async (event) => {
     event.preventDefault()
 
@@ -73,7 +71,7 @@ const App = () => {
     try {
       const newBlog = await blogService.create(blogObject)
       setBlogs((prevBlogs) => [...prevBlogs, newBlog])
-      setCreateBlogVisible(false)
+      blogFormRef.current.toggleVisibility()
       setSuccessMessage(
         `Blog ${newBlog.title} by ${newBlog.author} added succesfully`
       )
@@ -130,25 +128,17 @@ const App = () => {
       <p>
         {user.name} logged in <button onClick={handleLogout}>logout</button>
       </p>
-      <div>
-        <div style={hideWhenVisible}>
-          <button onClick={() => setCreateBlogVisible(true)}>
-            Create new blog
-          </button>
-        </div>
-        <div style={showWhenVisible}>
-          <CreateBlogForm
-            title={title}
-            author={author}
-            url={url}
-            handleTitleChange={({ target }) => setTitle(target.value)}
-            handleAuthorChange={({ target }) => setAuthor(target.value)}
-            handleUrlChange={({ target }) => setUrl(target.value)}
-            handleSubmit={createBlog}
-          />
-          <button onClick={() => setCreateBlogVisible(false)}>cancel</button>
-        </div>
-      </div>
+      <Togglable buttonLabel="new blog" ref={blogFormRef}>
+        <CreateBlogForm
+          title={title}
+          author={author}
+          url={url}
+          handleTitleChange={({ target }) => setTitle(target.value)}
+          handleAuthorChange={({ target }) => setAuthor(target.value)}
+          handleUrlChange={({ target }) => setUrl(target.value)}
+          handleSubmit={createBlog}
+        />
+      </Togglable>
       {blogs.map((blog) => (
         <Blog key={blog.id} blog={blog} />
       ))}
