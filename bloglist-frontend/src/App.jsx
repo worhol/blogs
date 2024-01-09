@@ -117,6 +117,23 @@ const App = () => {
     }
   }
 
+  const deleteBlog = async (blogToDelete) => {
+    const confirm = window.confirm(`Remove blog ${blogToDelete.title} by ${blogToDelete.author} ?`)
+    if (confirm) {
+      try {
+        await blogService.remove(blogToDelete)
+        setBlogs((prevBlogs) =>
+          prevBlogs.filter((blog) => blog.id !== blogToDelete.id)
+        )
+      } catch (error) {
+        setErrorMessage(`${error.message}`)
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+      }
+    }
+  }
+
   if (user === null) {
     return (
       <div>
@@ -173,6 +190,7 @@ const App = () => {
           blog={blog}
           user={user}
           handleLike={() => handleLike(blog)}
+          handleRemove={() => deleteBlog(blog)}
         />
       ))}
     </div>

@@ -32,7 +32,7 @@ blogsRouter.post('/', middleware.userExtractor, async (request, response) => {
   }
 })
 
-blogsRouter.delete('/:id', async (request, response) => {
+blogsRouter.delete('/:id',middleware.userExtractor, async (request, response) => {
   const user = request.user
 
   const blogId = request.params.id
