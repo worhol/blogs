@@ -19,7 +19,9 @@ const App = () => {
   const [successMessage, setSuccessMessage] = useState(null)
 
   useEffect(() => {
-    blogService.getAll().then((blogs) => setBlogs(blogs))
+    blogService
+      .getAll()
+      .then((blogs) => setBlogs(blogs.sort((a, b) => b.likes - a.likes)))
   }, [])
 
   useEffect(() => {
@@ -88,7 +90,7 @@ const App = () => {
       }, 5000)
     }
   }
-  
+
   const handleLike = async (updateBlog) => {
     const blogToUpdate = blogs.find((blog) => blog.id === updateBlog.id)
     if (blogToUpdate) {
@@ -99,7 +101,7 @@ const App = () => {
           title: blogToUpdate.title,
           author: blogToUpdate.author,
           url: blogToUpdate.url,
-          likes: blogToUpdate.likes += 1
+          likes: (blogToUpdate.likes += 1)
         }
 
         const newBlog = await blogService.update(updatedBlog)
