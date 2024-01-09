@@ -88,6 +88,32 @@ const App = () => {
       }, 5000)
     }
   }
+  
+  const handleLike = async (updateBlog) => {
+    const blogToUpdate = blogs.find((blog) => blog.id === updateBlog.id)
+    if (blogToUpdate) {
+      try {
+        const updatedBlog = {
+          id: blogToUpdate.id,
+          user: blogToUpdate.user.id,
+          title: blogToUpdate.title,
+          author: blogToUpdate.author,
+          url: blogToUpdate.url,
+          likes: blogToUpdate.likes += 1
+        }
+
+        const newBlog = await blogService.update(updatedBlog)
+        setBlogs((prevBlogs) =>
+          prevBlogs.map((blog) => (blog.id === newBlog.id ? newBlog : blog))
+        )
+      } catch (error) {
+        setErrorMessage(`${error.message}`)
+        setTimeout(() => {
+          setErrorMessage(null)
+        }, 5000)
+      }
+    }
+  }
 
   if (user === null) {
     return (
@@ -140,7 +166,12 @@ const App = () => {
         />
       </Togglable>
       {blogs.map((blog) => (
-        <Blog key={blog.id} blog={blog} user={user}/>
+        <Blog
+          key={blog.id}
+          blog={blog}
+          user={user}
+          handleLike={() => handleLike(blog)}
+        />
       ))}
     </div>
   )
