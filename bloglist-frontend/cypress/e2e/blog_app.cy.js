@@ -33,4 +33,33 @@ describe('Blog app', function () {
         .and('have.css', 'color', 'rgb(255, 0, 0)')
     })
   })
+  describe('When logged in', function () {
+    beforeEach(function () {
+      cy.get('#username').type('john')
+      cy.get('#password').type('pass')
+      cy.get('#login').click()
+    })
+
+    it('A blog can be created', function () {
+      cy.contains('new blog').click()
+      cy.get("[placeholder='title']").type('Test Title')
+      cy.get("[placeholder='author']").type('Test Author')
+      cy.get("[placeholder='url']").type('www.url.com')
+      cy.contains('create').click()
+      cy.get('.success').contains(
+        'Blog Test Title by Test Author added succesfully'
+      )
+      cy.get('#blog').contains('Test Title Test Author')
+    })
+    it('users can like a blog', function(){
+      cy.contains('new blog').click()
+      cy.get("[placeholder='title']").type('Test Title')
+      cy.get("[placeholder='author']").type('Test Author')
+      cy.get("[placeholder='url']").type('www.url.com')
+      cy.contains('create').click()
+      cy.get('#blog').contains('view').click()
+      cy.contains('like').click()
+      cy.contains('1')
+    })
+  })
 })
