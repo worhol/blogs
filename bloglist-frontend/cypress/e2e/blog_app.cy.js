@@ -1,3 +1,4 @@
+/* eslint-disable quotes */
 describe('Blog app', function () {
   beforeEach(function () {
     cy.request('POST', `${Cypress.env('BACKEND')}/testing/reset`)
@@ -91,7 +92,7 @@ describe('Blog app', function () {
       cy.contains('view').click()
       cy.should('not.contain', 'remove')
     })
-    it.only('blogs are ordered according to likes with the blog with the most likes being first', function () {
+    it('blogs are ordered according to likes with the blog with the most likes being first', function () {
       cy.contains('new blog').click()
       cy.createBlog({
         title: 'Title with least likes',
