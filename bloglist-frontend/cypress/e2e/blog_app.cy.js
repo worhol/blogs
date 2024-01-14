@@ -1,13 +1,19 @@
 describe('Blog app', function () {
   beforeEach(function () {
-    cy.request('POST', 'http://localhost:3003/api/testing/reset')
-    const user = {
+    cy.request('POST', `${Cypress.env('BACKEND')}/testing/reset`)
+    const userJohn = {
       username: 'john',
       name: 'John',
       password: 'pass'
     }
-    cy.request('POST', 'http://localhost:3003/api/users', user)
-    cy.visit('http://localhost:5173')
+    const userTester = {
+      username: 'test',
+      name: 'Tester',
+      password: 'pass'
+    }
+    cy.request('POST', `${Cypress.env('BACKEND')}/users`, userJohn)
+    cy.request('POST', `${Cypress.env('BACKEND')}/users`, userTester)
+    cy.visit('')
   })
 
   it('Login form is shown', function () {
@@ -35,9 +41,7 @@ describe('Blog app', function () {
   })
   describe('When logged in', function () {
     beforeEach(function () {
-      cy.get('#username').type('john')
-      cy.get('#password').type('pass')
-      cy.get('#login').click()
+      cy.login({ username: 'john', password: 'pass' })
     })
 
     it('A blog can be created', function () {
@@ -51,7 +55,7 @@ describe('Blog app', function () {
       )
       cy.get('#blog').contains('Test Title Test Author')
     })
-    it('users can like a blog', function(){
+    it('users can like a blog', function () {
       cy.contains('new blog').click()
       cy.get("[placeholder='title']").type('Test Title')
       cy.get("[placeholder='author']").type('Test Author')
@@ -60,6 +64,55 @@ describe('Blog app', function () {
       cy.get('#blog').contains('view').click()
       cy.contains('like').click()
       cy.contains('1')
+    })
+
+    it('user who created a blog can delete it', function () {
+      cy.login({ username: 'john', password: 'pass' })
+      cy.createBlog({
+        title: 'New Title',
+        author: 'New Author',
+        url: 'www.newurl.com'
+      })
+      cy.contains('view').click()
+      cy.contains('remove').click()
+      cy.get('html').should('not.contain', 'Test Title Test Author')
+    })
+    it('only the creator can see the delete button of a blog, not anyone else', function () {
+      cy.login({ username: 'john', password: 'pass' })
+      cy.createBlog({
+        title: 'New Title',
+        author: 'New Author',
+        url: 'www.newurl.com'
+      })
+      cy.contains('view').click()
+      cy.contains('remove')
+      cy.contains('logout').click()
+      cy.login({ username: 'test', password: 'pass' })
+      cy.contains('view').click()
+      cy.should('not.contain', 'remove')
+    })
+    it.only('blogs are ordered according to likes with the blog with the most likes being first', function () {
+      cy.contains('new blog').click()
+      cy.createBlog({
+        title: 'Title with least likes',
+        author: 'New Author',
+        url: 'www.newurl.com',
+        likes: 2
+      })
+      cy.createBlog({
+        title: 'New Title',
+        author: 'New Author',
+        url: 'www.newurl.com',
+        likes: 5
+      })
+      cy.createBlog({
+        title: 'Title with most likes',
+        author: 'New Author',
+        url: 'www.newurl.com',
+        likes: 9
+      })
+      cy.log(cy.get('#blog').eq(0))
+      cy.get('#blog').eq(0).should('contain', 'Title with most likes')
     })
   })
 })
